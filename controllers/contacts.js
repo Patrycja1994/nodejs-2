@@ -1,59 +1,42 @@
-const { Contact } = require("../models/user");
-const fs = require("fs/promises");
+const { Contact } = require("../models/contacts.js");
 
 const listContacts = async () => {
-  const response = await fs.readFile("./controllers/contacts.json");
-  return JSON.parse(response.toString());
+  const contacts = await Contact.find();
+  return contacts;
 };
 
-const getContactById = async (contactId) => {
-  const list = await listContacts();
-  const findIndex = list.find((el) => el.id.toString() === contactId.toString());
-
-  return findIndex;
+const getContactById = async (_id) => {
+  const contact = await Contact.findOne({ _id });
+  return contact;
 };
 
-const removeContact = async (contactId) => {
-  const list = await listContacts(contactId);
-  const findIndex = list.find((el) => el.id.toString() == contactId);
-  list.splice(findIndex, 1);
-
-  if (findIndex === -1) {
-    return JSON.parse(list);
-  }
-  
-  await fs.writeFilte("./contacts.json", JSON.stringify(list));
+const removeContact = async (_id) => {
+  await Contact.findOneAndDelete({ _id });
 };
 
-const addContact = async (body) => {
-  const list = await listContacts();
-  const newList = { id: list.length + 1, ...body };
-  list.push(newList);
-
-  await fs.writeFilte("./contacts.json", JSON.stringify(list));
-
-  return newList;
+const addContact = async (name, email, phone, favorite) => {
+  const contact = new Contact({ name, email, phone, favorite });
+  contact.save();
+  return contact;
 };
 
-const updateContact = async (contactId, body) => {
-  const list = await listContacts();
-  const findIndex = list.find((el) => el.id === contactId);
-
-  if (findIndex === -1) {
-    return null;
-  };
-  
-  list[findIndex] = { ...list[findIndex], ...body };
-
-  await fs.writeFilte("./contacts.json", JSON.stringify(list));
-
-  return list[findIndex];
+const updateContact = async (_id, newContact) => {
+  const updatedContact = await Contact.findByIdAndUpdate(_id, newContact);
+  return updatedContact;
 };
 
+const updateContactStatus = async (_id, favorite) => {
+  const update = { favorite };
+  const updatedContact = await Contact.findByIdAndUpdate(_id, update, {
+    new: true,
+  });
+  return updatedContact;
+};
 module.exports = {
   listContacts,
   getContactById,
   removeContact,
   addContact,
   updateContact,
+  updateContactStatus,
 };
