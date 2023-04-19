@@ -1,4 +1,5 @@
 const express = require('express');
+const { auth } = require("../auth/auth");
 const {
   listContacts,
   getContactById,
@@ -12,7 +13,7 @@ const { userSchema } = require("../models/contacts.js");
 
 const router = express.Router();
 
-router.get("/", async (req, res) => {
+router.get("/", auth, async (req, res) => {
   try {
     const contacts = await listContacts();
     res.status(200).json(contacts);
@@ -21,7 +22,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-router.get("/:id", async (req, res) => {
+router.get("/:id", auth, async (req, res) => {
   try {
     const { id } = req.params;
     if (id.length !== 24) {
@@ -37,7 +38,7 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-router.post('/', async (req, res) => {
+router.post('/', auth, async (req, res) => {
      const { error } = userSchema.validate(req.body);
 
     if (error) {
@@ -52,7 +53,7 @@ router.post('/', async (req, res) => {
     }
 });
 
-router.delete('/:contactId', async (req, res) => {
+router.delete('/:contactId', auth, async (req, res) => {
   const contactId = req.params.contactId;
   try {
     const contactRemove = removeContact(contactId);
@@ -66,7 +67,7 @@ router.delete('/:contactId', async (req, res) => {
   }
 });
 
-router.put('/:contactId', async (req, res, next) => {
+router.put('/:contactId', auth, async (req, res, next) => {
   const { contactId } = req.params;
   if (!contactId) {
     return res.status(400).send("Id is required to perform update")
@@ -89,7 +90,8 @@ router.put('/:contactId', async (req, res, next) => {
     return res.status(500).send("Something went wrong");
   }
 });
-router.patch("/:contactId/favorite", async (req, res) => {
+
+router.patch("/:contactId/favorite", auth, async (req, res) => {
   try {
     const { contactId: _id } = req.params;
     const { favorite } = req.body;
