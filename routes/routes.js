@@ -4,7 +4,7 @@ const usersRouter = require("./users");
 
 const router = express.Router();
 
-router.use('/api/contacts', contactsRouter);
-router.use('/api/users', usersRouter);
+router.use('/contacts', contactsRouter);
+router.use('/users', usersRouter);
 
 module.exports = router;

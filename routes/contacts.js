@@ -60,7 +60,7 @@ router.delete('/:contactId', auth, async (req, res) => {
     if (contactRemove) {
       res.status(200).send("Contact was delete");
     } else {
-      res.status(404).send("Not found");
+      res.status(404).send("Not found!!");
     }
   } catch {
     return res.status(500).send("Something went wrong");
