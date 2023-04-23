@@ -1,18 +1,17 @@
 const { User, hashPassword } = require("../models/user");
 const gravatar = require("gravatar");
 
-const createUser = async (password, email, subscription, token) => {
+const createUser = async (password, email, subscription, avatarURL, token) => {
   const hashedPassword = hashPassword(password);
-  const avatarURL = gravatar.url(email, {s: "250", d: "404" });
+  const createAvatar = gravatar.url(email, { d: "robohash", s: "250" });
 
-    const user = new User({
+  const user = new User({
     password: hashedPassword,
     email,
     subscription,
+    avatarURL: createAvatar,
     token,
-    avatarURL
-    });
-    
+  });
   user.save();
   return user;
 };
@@ -41,16 +40,20 @@ const updateUserToken = async (_id) => {
 };
 
 const updateAvatar = async (email, avatarURL) => {
-  const user = await User.findOneAndUpdate({ email }, { avatarURL }, { new: true });
- return user;
+  const user = await User.findOneAndUpdate(
+    { email },
+    { avatarURL },
+    { new: true }
+  );
+  return user;
 };
 
 module.exports = {
-    createUser,
-    getAllUsers,
-    getUserById,
-    getUserByEmail,
-    addUserToken,
-    updateUserToken,
-    updateAvatar,
+  createUser,
+  getAllUsers,
+  getUserById,
+  addUserToken,
+  updateUserToken,
+  getUserByEmail,
+  updateAvatar,
 };

@@ -1,4 +1,5 @@
-const express = require('express');
+const express = require("express");
+
 const { auth } = require("../auth/auth");
 const {
   listContacts,
@@ -6,10 +7,9 @@ const {
   addContact,
   removeContact,
   updateContact,
-  updateContactStatus,
+  updateStatusContact,
 } = require("../controllers/contacts");
-
-const { userSchema } = require("../models/contacts.js");
+const { contactValidationSchema } = require("../models/contacts");
 
 const router = express.Router();
 
@@ -19,6 +19,21 @@ router.get("/", auth, async (req, res) => {
     res.status(200).json(contacts);
   } catch {
     return res.status(500).send("Something went wrong");
+  }
+});
+
+router.post("/", auth, async (req, res) => {
+  const { error } = contactValidationSchema.validate(req.body);
+  if (error) {
+    return res.status(400).send(error.details[0].message);
+  }
+  try {
+    const { name, email, phone, favorite } = req.body;
+    const contact = await addContact(name, email, phone, favorite);
+    return res.status(200).json(contact);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).send("Something went wrong!");
   }
 });
 
@@ -38,56 +53,38 @@ router.get("/:id", auth, async (req, res) => {
   }
 });
 
-router.post('/', auth, async (req, res) => {
-     const { error } = userSchema.validate(req.body);
-
-    if (error) {
-        return res.status(400).send(error.details[0].message);
-    }
-    try {
-        const { id, name, email, phone, favorite } = req.body;
-        const user = addContact(id, name, email, phone, favorite);
-        return res.status(201).json(user);
-    } catch {
-        return res.status(500).send("Something went wrong");
-    }
-});
-
-router.delete('/:contactId', auth, async (req, res) => {
-  const contactId = req.params.contactId;
+router.delete("/:id", auth, async (req, res) => {
+  const contactId = req.params.id;
   try {
-    const contactRemove = removeContact(contactId);
-    if (contactRemove) {
-      res.status(200).send("Contact was delete");
+    const removed = await removeContact(contactId);
+    if (removed) {
+      return res.status(200).send("Contact deleted");
     } else {
-      res.status(404).send("Not found!!");
+      return res.status(404).send("Contact not found");
     }
-  } catch {
+  } catch (err) {
     return res.status(500).send("Something went wrong");
   }
 });
 
-router.put('/:contactId', auth, async (req, res, next) => {
-  const { contactId } = req.params;
-  if (!contactId) {
-    return res.status(400).send("Id is required to perform update")
+router.put("/:id", auth, async (req, res) => {
+  const { id } = req.params;
+  if (!id) {
+    return res.status(400).send("Id is required to perform update");
   }
-  
-  const { error } = userSchema.validate(req.body);
-
+  const { error } = contactValidationSchema.validate(req.body);
   if (error) {
     return res.status(400).send(error.details[0].message);
   }
-
-  const contact = getContactById(contactId);
+  const contact = getContactById(id);
   if (!contact) {
-    return res.status(404).send("contact not found");
+    return res.status(404).send("Contact not found");
   }
   try {
-    updateContact(contactId, req.body);
-    return res.status(200).send("contact sucesfully update");
+    updateContact(id, req.body);
+    return res.status(200).send("Contact sucessfully updated!");
   } catch {
-    return res.status(500).send("Something went wrong");
+    return res.status(500).send("Something went wrong!");
   }
 });
 
@@ -99,12 +96,11 @@ router.patch("/:contactId/favorite", auth, async (req, res) => {
       return res.status(400).send("Missing field favorite");
     }
     const favoriteValue = Boolean(favorite);
-    const updatedContact = await updateContactStatus(_id, favoriteValue);
+    const updatedContact = await updateStatusContact(_id, favoriteValue);
     return res.status(200).send(updatedContact);
   } catch (err) {
     return res.status(404).send("Contact not found");
   }
 });
-
 
 module.exports = router;
