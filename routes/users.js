@@ -58,8 +58,7 @@ router.post("/signup", async (req, res) => {
     if (isEmailOccupied) {
       return res.status(409).send(`Email ${email} is already in use!`);
     }
-    const newUser = await userController.createUser(req.body);
-
+    const user = await createUser(password, email, subscription);
     const transporter = nodemailer.createTransport({
       host: "smtp.ethereal.email",
       port: 587,
@@ -71,30 +70,22 @@ router.post("/signup", async (req, res) => {
     });
 
     const html = `
-    <div style="display: flex">
-    <h1>Verification</h1>
-    <p>Click on the link below to verify your account</p>
-    <a href='http://localhost:3000/api/users/verify/${newUser.verifyToken}' target='_blank'>VERIFY</a>
-    </div>`;
+    		<div>
+    			<p>Click on the link below to verify your account</p>
+    			<a href='http://localhost:3000/api/users/verify/${user.verifyToken}' target='_blank'>VERIFY</a>
+    		</div>`;
 
     const emailOptions = {
       from: '"Patrycja 🖥️" <patrycja@test.pl>',
       to: [`${email}`],
       subject: "Verification ✔",
-      text: "Email with verification link",
+      text: "Mail with verification link",
       html,
     };
-
     await transporter.sendMail(emailOptions);
-
-    console.log(`Message sent:${emailOptions.messageId}`);
-
-    console.log(`email sent" ${emailOptions.messageID}`, emailOptions);
-
-    res.status(201).json(newUser);
-  } catch (error) {
-    next(error);
-    return res.status(500).json({ message: "Server error" });
+    return res.status(200).json(user);
+  } catch (err) {
+    return res.status(500).send("Something went wrong POST!");
   }
 });
 
@@ -172,12 +163,10 @@ router.patch(
         )
       );
       res.status(200).json(user);
-    } catch (error) {
-      next(error);
-      return res.status(500).json({ message: "Server error" });
-    }
+    } catch (err) {
+    return res.status(500).send("Something went wrong POST!");
   }
-);
+});
 
 router.post("/verify", async (req, res, next) => {
   try {
